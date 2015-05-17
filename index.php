@@ -1,13 +1,35 @@
 <?php
+/**
+ * @author PhileCMS
+ * @link https://philecms.com
+ * @license http://opensource.org/licenses/MIT
+ * @package Phile
+ */
 
-define('ROOT_DIR', realpath(dirname(__FILE__)) .'/');
-define('CONTENT_DIR', ROOT_DIR .'content-sample/');
-define('CONTENT_EXT', '.md');
-define('LIB_DIR', ROOT_DIR .'lib/');
-define('PLUGINS_DIR', ROOT_DIR .'plugins/');
-define('THEMES_DIR', ROOT_DIR .'themes/');
-define('CACHE_DIR', LIB_DIR .'cache/');
+require_once __DIR__ . '/lib/Phile/Bootstrap.php';
 
-require_once(ROOT_DIR .'vendor/autoload.php');
-require_once(LIB_DIR .'pico.php');
-$pico = new Pico();
+ob_start();
+
+try {
+	\Phile\Bootstrap::getInstance()->initializeBasics();
+	$router = new \Phile\Core\Router();
+	$response = new \Phile\Core\Response();
+	$phileCore = new \Phile\Core($router, $response);
+	$phileCore->render();
+} catch (\Phile\Exception\AbstractException $e) {
+	if (\Phile\Core\ServiceLocator::hasService('Phile_ErrorHandler')) {
+		ob_end_clean();
+
+		/** @var \Phile\ServiceLocator\ErrorHandlerInterface $errorHandler */
+		$errorHandler = \Phile\Core\ServiceLocator::getService('Phile_ErrorHandler');
+		$errorHandler->handleException($e);
+	}
+} catch (\Exception $e) {
+	if (\Phile\Core\ServiceLocator::hasService('Phile_ErrorHandler')) {
+		ob_end_clean();
+
+		/** @var \Phile\ServiceLocator\ErrorHandlerInterface $errorHandler */
+		$errorHandler = \Phile\Core\ServiceLocator::getService('Phile_ErrorHandler');
+		$errorHandler->handleException($e);
+	}
+}
